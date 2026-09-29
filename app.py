@@ -49,6 +49,7 @@ def read_json(path):
 
 
 runs = []
+run_times = {}
 unavailable = 0
 for status in (ROOT / "outputs").glob("*/status.json"):
     if getattr(status.stat(), "st_flags", 0) & 0x40000000:
@@ -56,10 +57,11 @@ for status in (ROOT / "outputs").glob("*/status.json"):
         continue
     try:
         if read_json(status).get("state") == "complete":
+            run_times[status.parent] = read_json(status.parent / "manifest.json").get("created_utc", status.parent.name)
             runs.append(status.parent)
     except (OSError, ValueError):
         unavailable += 1
-runs.sort(reverse=True)
+runs.sort(key=run_times.get, reverse=True)
 if page == "Historial":
     from nusecast.workbench import render_history
     render_history(runs)

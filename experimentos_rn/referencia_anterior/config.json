@@ -1,0 +1,41 @@
+{
+  "incident_code": "942",
+  "locality": "KENNEDY",
+  "unknown_upz": "UPZ999",
+  "start": "2020-01",
+  "end": "2026-07",
+  "first_target": "2021-01",
+  "train_end": "2023-12",
+  "validation_end": "2024-12",
+  "test_end": "2026-07",
+  "suspect_months": [
+    "2024-01",
+    "2024-04"
+  ],
+  "exclude_suspect": true,
+  "interval_level": 0.9,
+  "profiles": {
+    "demo": {
+      "seeds": [
+        42
+      ],
+      "candidates": 2,
+      "mlp_iterations": 350,
+      "evolution_generations": 35,
+      "trees": 60
+    },
+    "extended": {
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "candidates": 3,
+      "mlp_iterations": 1500,
+      "evolution_generations": 180,
+      "trees": 200
+    }
+  }
+}

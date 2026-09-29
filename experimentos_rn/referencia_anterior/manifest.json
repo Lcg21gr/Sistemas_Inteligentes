@@ -1,0 +1,35 @@
+{
+  "run_id": "20260928T153109Z-12e53a1d",
+  "profile": "demo",
+  "created_utc": "2026-09-28T15:31:10.511781+00:00",
+  "source_file": "Numero_incidentes.csv",
+  "source_sha256": "fbe55fd26180f6da115f8a33999dd37feede9ab6c097624ed2ad0aa84c4bfe62",
+  "config_sha256": "4bc50f0f4d9ff86508ae13f4f6f7fded694a8f0d5083c63fb1a9e721d05ca83b",
+  "python": "3.12.14",
+  "versions": {
+    "numpy": "2.5.3",
+    "pandas": "2.3.3",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.8.0",
+    "holidays": "0.105",
+    "plotly": "6.9.0",
+    "streamlit": "1.64.0"
+  },
+  "source_code_sha256": {
+    "src/nusecast/__init__.py": "91447944015cec709e8aa7655f7e9d64e1e4508e7023a57fe3746911c0fc6fed",
+    "src/nusecast/assistant.py": "5cd17e54e89a58c0bba89aea6080afe6c2f1a9c1fa4d66200bc572664561dff7",
+    "src/nusecast/cli.py": "6d67848812d21d5e5fa0330a2494d5ae8820e1133d0c3439fe002507e4be5e50",
+    "src/nusecast/data.py": "df117029d6e0dc7602ab6448947b3b8ff6c30d5d6f6a808df8ade748a52e7e9b",
+    "src/nusecast/experiment.py": "3cbf21813895d5e507a68bf8d33b2db5520de1e47a161c18851f5608f742f89a",
+    "src/nusecast/metrics.py": "599a89d79d931de03ba265c3ecee2ea6f55bc56c0b3503c707a94d1cf7561ab7",
+    "src/nusecast/models.py": "015010bb6abbd0abcf17a040d9f061d8d4774e3225b6ba18dec3fd64f5396cd1",
+    "src/nusecast/report.py": "9e2a983cb1895932aed886be75d2ff783b9163d1e1db518eebf34fc442337c49"
+  },
+  "protocol": "Origen móvil mensual expansivo; hiperparámetros fijados en 2024; prueba 2025–2026.",
+  "forecast_horizon_months": 1,
+  "seeds": [
+    42
+  ],
+  "configs_per_family": 2,
+  "status_note": "Exploratorio: el periodo de prueba ya fue examinado en el trabajo previo."
+}

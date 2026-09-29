@@ -172,7 +172,8 @@ def test_training_ui_validation_invalidates_on_parameter_change(tmp_path, sample
     ui.run()
     assert len(list((tmp_path / "outputs").glob("*/status.json"))) == 1
     ui.radio(key="main_page").set_value("Historial").run()
-    assert not ui.exception and len(ui.dataframe) == 1
+    assert not ui.exception
+    assert any("MAE" in item.value.columns for item in ui.dataframe)
 
 
 def test_settings_persist_without_secret_and_temperature_is_sent(tmp_path, monkeypatch, transport):

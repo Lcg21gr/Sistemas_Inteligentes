@@ -104,6 +104,8 @@ def _run(root, source, config, profile_name, profile, output, run_id, progress=N
                 "protocol": f"Origen móvil mensual expansivo; validación hasta {config['validation_end']}; prueba hasta {config['test_end']}.",
                 "forecast_horizon_months": 1,
                 "seeds": profile["seeds"], "configs_per_family": profile["candidates"],
+                "actual_configs_per_family": {family: len(model_grid(config, family, profile))
+                    for family in config.get("models", list(TUNED))},
                 "status_note": "Exploratorio: el periodo de prueba ya fue examinado en el trabajo previo."}
     save_json(output / "manifest.json", manifest)
     eligible = frame.loc[frame.eligible & frame.y.notna()]

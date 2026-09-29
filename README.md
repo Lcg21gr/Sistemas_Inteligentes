@@ -22,8 +22,10 @@ También puedes abrir `Abrir NUSECast.command` en macOS una vez instalado el ent
 
 ## Datos y primer experimento
 
-El repositorio no contiene claves, archivos de usuarios ni resultados históricos.
-La pantalla inicial sin ejecuciones es normal. Abre **Datos y entrenamiento →
+El repositorio no contiene claves ni archivos privados cargados por usuarios.
+Conserva el material académico recibido en `experimentos_rn`, separado de la
+aplicación. Historial solo muestra ejecuciones calculadas en la herramienta.
+La pantalla inicial sin ejecuciones propias es normal. Abre **Datos y entrenamiento →
 Cargar CSV o Excel**, importa el archivo, ajusta fechas y modelos, valida y entrena.
 
 Columnas obligatorias:
@@ -59,6 +61,35 @@ Los Transformers, LSTM, RAG y sistemas multiagente no están implementados.
 
 Consulta [la guía de uso](docs/GUIA_LABORATORIO.md) y
 [el protocolo experimental](docs/PROTOCOLO.md).
+
+## Comparar tus propias pruebas en la aplicación
+
+1. Importa un CSV o Excel una sola vez.
+2. Selecciona **Configuración manual**, pon nombre a la prueba y fija fechas y semillas.
+3. Valida y entrena. Cada ejecución conserva parámetros, datos de evaluación y métricas.
+4. Con el mismo archivo, cambia el nombre y un hiperparámetro. Valida y entrena otra vez.
+5. En **Historial**, selecciona hasta tres pruebas y el modelo que quieres contrastar.
+
+Verás parámetros lado a lado, MAE/RMSE/sesgo, diferencias frente a la primera
+prueba seleccionada, error por mes y pronósticos por UPZ. Si las filas o los valores
+reales de evaluación no coinciden, se deshabilitan diferencias porcentuales y curvas
+comparativas. Conserva también las semillas, fechas y preparación para aislar factores.
+
+Al volver desde Historial, **Reutilizar último archivo importado** evita cargarlo de
+nuevo mientras la sesión y el archivo sigan disponibles. No se implementa persistencia
+externa ni recuperación de sesión después de reinicios del servidor.
+
+**Factorial controlado RN** combina hasta tres tasas, tres tamaños de una capa y
+tres valores de L2 (hasta 27 configuraciones). Evalúa solo la RN y las referencias,
+elige con validación y guarda el detalle en `search_validation.csv`.
+En Historial abre **Combinaciones evaluadas en validación** para ver la tabla y
+gráfica del experimento. Se conservan los límites de 2500 ajustes y 15 minutos
+comprobados entre ajustes. Las tablas y gráficos se recalculan de los resultados
+de tus pruebas, no de los CSV del compañero.
+
+El historial muestra exclusivamente ejecuciones calculadas en la herramienta.
+No importa resultados externos ni referencias precalculadas. La carpeta
+`experimentos_rn` se conserva como material de apoyo, sin conexión con el comparador.
 
 ## Preparar Streamlit Community Cloud
 

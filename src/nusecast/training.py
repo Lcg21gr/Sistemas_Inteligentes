@@ -2,13 +2,29 @@ import copy
 import fcntl
 import time
 from contextlib import contextmanager
+from itertools import product
 
 from nusecast.data import load_panel, make_features, split_label, validate_config
 from nusecast.models import BASELINES, TUNED, candidates
 
 
 def model_grid(config, family, profile):
-    return config.get("model_grid", {}).get(family, candidates(family, profile["candidates"]))
+    grid = config.get("model_grid", {})
+    return grid[family] if family in grid else candidates(family, profile["candidates"])
+
+
+def factorial_grid(rates, neurons, alphas):
+    for values in [rates, neurons, alphas]:
+        if not 1 <= len(values) <= 3 or len(set(values)) != len(values):
+            raise ValueError("Cada factor admite de uno a tres valores distintos.")
+    for value in rates:
+        bounded(value, 0.00001, 0.1, "Tasa de aprendizaje")
+    for value in neurons:
+        bounded(value, 1, 128, "Neuronas", True)
+    for value in alphas:
+        bounded(value, 0, 10, "Regularización")
+    return [{"hidden": [n], "learning_rate": rate, "alpha": alpha, "activation": "relu"}
+            for rate, n, alpha in product(rates, neurons, alphas)]
 
 
 def bounded(value, low, high, name, integer=False):
@@ -34,8 +50,9 @@ def validate_training(config, profile_name):
         bounded(profile[field], low, high, field, True)
     for family in selected:
         grid = model_grid(config, family, profile)
-        if not isinstance(grid, list) or not 1 <= len(grid) <= 3:
-            raise ValueError("Cada modelo admite de una a tres configuraciones.")
+        limit = 27 if family == "RN" and config.get("experiment_design") == "factorial_rn" else 3
+        if not isinstance(grid, list) or not 1 <= len(grid) <= limit:
+            raise ValueError(f"El modelo {family} admite de una a {limit} configuraciones en este modo.")
         for params in grid:
             if family == "RN":
                 if not 1 <= len(params["hidden"]) <= 3:

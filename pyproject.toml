@@ -16,6 +16,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10"]
+experiments = ["matplotlib>=3.9,<4"]
 
 [project.scripts]
 nusecast = "nusecast.cli:main"

@@ -39,6 +39,38 @@ Cada ejecución guarda configuraciones, selección, métricas, pronósticos, has
 
 ## Comparación responsable
 
+### Prueba 1, prueba 2 y prueba 3 con tu propio archivo
+
+Importa una vez. En **Configuración manual** selecciona la RN, nombra la prueba
+y fija fechas, semillas, tasa, L2 e iteraciones. Para analizar neuronas, puedes usar
+8 en la primera prueba, 32 en la segunda y 128 en la tercera, dejando lo demás igual.
+Después de cada cambio debes validar y entrenar de nuevo. Cambiar parámetros por
+sí solo no actualiza resultados antiguos: cada prueba queda guardada separadamente.
+
+En **Historial** elige hasta tres ejecuciones, selecciona RN y el periodo de
+validación. La tabla compara métricas; debajo se ven parámetros, error mensual y
+predicciones por UPZ. Las diferencias se calculan frente a la primera seleccionada.
+Al regresar a entrenar, usa **Reutilizar último archivo importado**. Las ejecuciones
+adicionales se pueden guardar; el límite de tres aplica a la comparación simultánea.
+
+### Experimento sistemático, no solo calibración
+
+En **Factorial controlado RN**, tres tasas y tres valores de neuronas producen
+nueve combinaciones manteniendo L2 fija. Si también eliges tres L2, serán 27.
+No son tres capas: cada configuración tiene una sola capa con uno de esos tamaños.
+El modo ejecuta la RN y las referencias aunque hubiera otros modelos seleccionados.
+Usa las mismas semillas y particiones para todos los candidatos. Se conserva la
+búsqueda temporal existente y la selección usa MAE medio de validación entre semillas.
+
+En Historial, el desplegable **Combinaciones evaluadas en validación** contiene la
+tabla de candidatos y, para el factorial, la gráfica tasa–MAE por tamaño de red y L2.
+La prueba se reserva para evaluar la selección, no para decidir qué tasas convienen.
+Al analizar efectos, compara celdas que difieran en un solo factor. La variación
+entre semillas no es un intervalo predictivo ni demuestra significación estadística.
+
+El historial muestra únicamente ejecuciones calculadas en la herramienta.
+No carga resultados externos ni referencias precalculadas.
+
 Selecciona hiperparámetros por MAE de validación; no ajustes reiteradamente para reducir el test. El historial avisa si cambian los datos o las filas de evaluación. Un CSV normalizado puede tener distinto hash aun cuando sus filas relevantes sean equivalentes: el aviso es conservador. El test original ya fue examinado; hace falta una evaluación futura independiente para una conclusión confirmatoria.
 
 ## Configuración IA

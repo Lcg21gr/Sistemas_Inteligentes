@@ -9,7 +9,7 @@ import streamlit as st
 from nusecast.assistant import load_settings, save_settings
 from nusecast.data import REQUIRED, load_config, sha256
 from nusecast.models import FAMILIES, TUNED
-from nusecast.training import train_interactive, validate_source
+from nusecast.training import factorial_grid, train_interactive, validate_source
 from nusecast.uploads import ingest, sheet_names
 
 
@@ -42,9 +42,16 @@ def render_training(root):
     st.header("Datos y entrenamiento")
     st.write("1. Elige los datos → 2. Ajusta el experimento → 3. Valida → 4. Entrena")
     base = load_config(root / "config.json")
-    origin = st.radio("Fuente de datos", ["Datos actuales de NUSECast", "Cargar CSV o Excel"], horizontal=True)
+    previous_import = st.session_state.get("imported_data")
+    reusable = previous_import is not None and Path(previous_import[1]).is_file()
+    sources = (["Reutilizar último archivo importado"] if reusable else []) + ["Datos actuales de NUSECast", "Cargar CSV o Excel"]
+    origin = st.radio("Fuente de datos", sources, horizontal=True)
     source = root / "data" / "raw" / "Numero_incidentes.csv"
     provenance = None
+    if origin == "Reutilizar último archivo importado":
+        source, provenance = Path(previous_import[1]), previous_import[2]
+        st.success(f"Mismo archivo: {provenance['original_name']} · {provenance['rows']:,} registros.")
+        st.caption("Puedes ejecutar otra prueba cambiando los hiperparámetros sin volver a cargar el archivo.")
     if origin == "Cargar CSV o Excel":
         st.caption("Solo datos agregados de incidentes, sin información personal. Máximo 120 MB. XLSM: lectura de valores, nunca macros.")
         with st.expander("Columnas requeridas y límites"):
@@ -93,8 +100,18 @@ def render_training(root):
     st.subheader("Configuración del experimento")
     st.caption("Alcance del proyecto: Kennedy, tipo 942. Cambiar un control invalida la validación anterior. Las referencias sencillas se incluyen siempre.")
     selected = st.multiselect("Modelos a entrenar", list(TUNED), default=["RN", "RI", "AM"], format_func=FAMILIES.get)
-    mode = st.radio("Ajuste de hiperparámetros", ["Búsqueda predefinida en validación", "Configuración manual"], horizontal=True)
+    mode = st.radio("Ajuste de hiperparámetros", ["Búsqueda predefinida en validación", "Configuración manual", "Factorial controlado RN"], horizontal=True)
     config = copy.deepcopy(base)
+    config["experiment_name"] = st.text_input("Nombre de esta prueba", "Prueba", max_chars=80,
+        help="Ejemplo: Prueba 1 · 8 neuronas. Cada ejecución se guarda por separado aunque repitas el nombre.")
+    st.caption("Para comparar versiones: usa Configuración manual, conserva archivo, fechas y semillas, "
+               "cambia el factor que quieras estudiar y vuelve a entrenar. Después entra en Historial.")
+    factorial = mode == "Factorial controlado RN"
+    if factorial:
+        selected = ["RN"]
+        config["experiment_design"] = "factorial_rn"
+        st.info("Este modo evalúa solamente la RN y las referencias. Combina automáticamente los valores de los factores, "
+                "manteniendo los mismos datos, fechas y semillas; elige la configuración con validación.")
     config["models"] = selected
     if provenance:
         config["import"] = provenance
@@ -108,7 +125,7 @@ def render_training(root):
     manual = mode == "Configuración manual"
     grid = {}
     if "RN" in selected:
-        with st.expander("Red neuronal · capas, aprendizaje y regularización", expanded=manual):
+        with st.expander("Red neuronal · capas, aprendizaje y regularización", expanded=manual or factorial):
             profile["mlp_iterations"] = st.number_input("Iteraciones máximas MLP", 10, 2000, 350, step=10)
             if manual:
                 hidden_text = st.text_input("Neuronas por capa oculta", "32,16", help="Ejemplo: 32,16 significa dos capas. Máximo tres capas de 128 neuronas.")
@@ -122,6 +139,19 @@ def render_training(root):
                 alpha = b.number_input("Regularización L2 (alpha)", 0.0, 10.0, 0.1, step=0.01)
                 activation = st.selectbox("Activación oculta", ["relu", "tanh", "logistic"])
                 grid["RN"] = [{"hidden": hidden, "alpha": alpha, "learning_rate": rate, "activation": activation}]
+            if factorial:
+                rates = st.text_input("Tasas a probar (separadas por comas)", "0.0003,0.003,0.03")
+                neurons = st.text_input("Neuronas a probar (una capa)", "8,32,128")
+                alphas = st.text_input("Valores L2 a probar", "1.0")
+                try:
+                    grid["RN"] = factorial_grid([float(v.strip()) for v in rates.split(",")],
+                        [int(v.strip()) for v in neurons.split(",")], [float(v.strip()) for v in alphas.split(",")])
+                except ValueError as error:
+                    st.error(f"Revisa los factores (usa punto decimal): {error}")
+                    return
+                st.write(f"{len(grid['RN'])} combinaciones. Una capa oculta y activación ReLU constantes.")
+                st.caption("Tres tasas × tres tamaños = nueve combinaciones. Con tres valores L2 serían 27. "
+                           "No confundir neuronas a probar con varias capas de una misma red.")
             st.caption("Más iteraciones no garantizan menor error. El entrenamiento puede terminar antes si deja de mejorar su pérdida; no usa el test para detenerse.")
     if "AM" in selected:
         with st.expander("Bosque aleatorio", expanded=manual):
@@ -144,7 +174,7 @@ def render_training(root):
                 penalty = st.number_input("Penalización evolutiva", 0.0, 10.0, 0.1, step=0.01)
                 population = st.number_input("Multiplicador de población", 2, 20, 8)
                 grid["ME"] = [{"penalty": penalty, "popsize": population}]
-    if manual:
+    if manual or factorial:
         config["model_grid"] = grid
         profile["candidates"] = 1
     config["profiles"]["custom"] = profile
@@ -202,34 +232,11 @@ def render_training(root):
     if st.session_state.get("last_training_run"):
         result = Path(st.session_state["last_training_run"])
         st.success(f"Experimento disponible: {result.name}. Selecciónalo en Resultados.")
+        st.info("Para una segunda o tercera prueba, cambia el nombre y los hiperparámetros, valida y vuelve a entrenar. "
+                "El resultado anterior se conserva. En Historial puedes comparar hasta tres pruebas.")
         st.download_button("Descargar configuración del experimento", (result / "config.json").read_bytes(), "configuracion_nusecast.json", "application/json")
 
 
 def render_history(runs):
-    st.header("Historial de experimentos")
-    st.caption("Cada ejecución conserva sus datos de evaluación y parámetros. Compara MAE solo cuando las filas de evaluación sean idénticas.")
-    if not runs:
-        st.info("Todavía no hay ejecuciones terminadas.")
-        return
-    chosen = st.multiselect("Ejecuciones a comparar", runs, default=runs[:2], format_func=lambda p: p.name, max_selections=10)
-    frames, signatures = [], set()
-    for run in chosen:
-        config = json.loads((run / "config.json").read_text())
-        manifest = json.loads((run / "manifest.json").read_text())
-        validation = pd.read_csv(run / "metrics_validation.csv")[["family", "mae"]].rename(columns={"mae": "MAE validación"})
-        score = pd.read_csv(run / "metrics_test.csv")[["family", "mae"]].rename(columns={"mae": "MAE prueba"}).merge(validation, on="family")
-        score.insert(0, "Ejecución", run.name)
-        score["Modelo"] = score.family.map(FAMILIES)
-        frames.append(score[["Ejecución", "Modelo", "MAE validación", "MAE prueba"]])
-        prediction = pd.read_csv(run / "predictions_test.csv")
-        target = prediction[["period", "upz", "y"]].drop_duplicates().sort_values(["period", "upz"]).to_csv(index=False)
-        validation_target = pd.read_csv(run / "predictions_validation.csv")[["period", "upz", "y"]].drop_duplicates().sort_values(["period", "upz"]).to_csv(index=False)
-        signatures.add(hashlib.sha256((target + validation_target + manifest["source_sha256"]).encode()).hexdigest())
-        with st.expander(f"Configuración · {run.name}"):
-            st.json(config)
-    if len(signatures) > 1:
-        st.warning("Los datos o las filas de evaluación difieren: estos errores no son una comparación directa de rendimiento.")
-    if frames:
-        combined = pd.concat(frames, ignore_index=True)
-        st.dataframe(combined.round(3), hide_index=True, width="stretch")
-        st.download_button("Descargar historial seleccionado", combined.to_csv(index=False), "comparacion_experimentos.csv", "text/csv")
+    from nusecast.comparison import render_comparison
+    render_comparison(runs)

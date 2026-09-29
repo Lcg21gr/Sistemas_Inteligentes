@@ -17,3 +17,4 @@ outputs/
 .streamlit/secrets.toml
 *.pem
 *.key
+experimentos_rn/features.csv

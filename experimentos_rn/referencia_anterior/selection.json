@@ -1,0 +1,53 @@
+{
+  "models": {
+    "RN": {
+      "candidate": 1,
+      "params": {
+        "hidden": [
+          32,
+          16
+        ],
+        "alpha": 0.1
+      }
+    },
+    "ME": {
+      "candidate": 1,
+      "params": {
+        "penalty": 0.1,
+        "popsize": 8
+      }
+    },
+    "RI": {
+      "candidate": 1,
+      "params": {
+        "window": 6,
+        "prior_strength": 1.0
+      }
+    },
+    "AM": {
+      "candidate": 0,
+      "params": {
+        "max_depth": 5,
+        "min_samples_leaf": 5
+      }
+    },
+    "BASE_LAST": {
+      "candidate": 0,
+      "params": {}
+    },
+    "BASE_MA3": {
+      "candidate": 0,
+      "params": {}
+    },
+    "BASE_SEASONAL": {
+      "candidate": 0,
+      "params": {}
+    },
+    "GLM": {
+      "candidate": 0,
+      "params": {}
+    }
+  },
+  "chosen_by_validation": "RI",
+  "criterion": "MAE de validación; nunca MAE de prueba"
+}
